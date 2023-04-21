@@ -11,6 +11,7 @@ contract Gateway is IGateway {
     address private _registry;
 
     struct Amounts {
+        address tokenAddress;
         uint256 input;
         uint256 fee;
     }
@@ -35,7 +36,7 @@ contract Gateway is IGateway {
         address treasury = _getTreasuryAddress();
         uint256 userShares = _amount - treasuryShares;
 
-        gatewayOf[_to] = Amounts(_amount, userShares);
+        gatewayOf[_to] = Amounts(_token, _amount, userShares);
 
         // transfer user shares to user
         bool userTransfer = IERC20(_token).transferFrom(msg.sender, _to, userShares);
@@ -59,7 +60,7 @@ contract Gateway is IGateway {
         address treasury = _getTreasuryAddress();
         uint256 userShares = msg.value - treasuryShares;
 
-        gatewayOf[_to] = Amounts(msg.value, userShares);
+        gatewayOf[_to] = Amounts(address(0), msg.value, userShares);
 
         // transfer user shares to user
         (bool sentToUser,) = _to.call{value: userShares}("");
