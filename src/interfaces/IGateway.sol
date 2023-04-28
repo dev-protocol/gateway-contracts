@@ -3,7 +3,9 @@
 pragma solidity ^0.8.13;
 
 interface IGateway {
-    function split(address _to, uint256 _amount, address _token) external;
+    function split(address _to, address _propertyAddress, bytes32 _payload, uint256 _amount, address _token)
+        external
+        returns (uint256);
 
-    function split(address _to) external payable;
+    function split(address _to, address _propertyAddress, bytes32 _payload) external payable returns (uint256);
 }
