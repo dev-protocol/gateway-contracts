@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {IPolicy} from "./interfaces/IPolicy.sol";
+import {ILockup} from "./interfaces/ILockup.sol";
 import {IGateway} from "./interfaces/IGateway.sol";
 import {IAddressRegistry} from "./interfaces/IAddressRegistry.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
@@ -27,8 +28,12 @@ contract Gateway is IGateway {
      * @param _to The address to send user shares to
      * @param _amount The amount of shares to split
      * @param _token The address of the token to split
+     * @return stakingPositionId The ID of the created new staking position
      */
-    function split(address _to, uint256 _amount, address _token) external {
+    function send(address _to, address _propertyAddress, bytes32 _payload, uint256 _amount, address _token)
+        external
+        returns (uint256 stakingPositionId)
+    {
         require(IERC20(_token).balanceOf(msg.sender) >= _amount, "Insufficient balance");
         require(_amount > 0, "Must send tokens");
 
@@ -37,6 +42,9 @@ contract Gateway is IGateway {
         uint256 userShares = _amount - treasuryShares;
 
         gatewayOf[_to] = Amounts(_token, _amount, userShares);
+
+        // deposit to property
+        stakingPositionId = ILockup(_getLockupAddress()).depositToProperty(_propertyAddress, 0, _payload);
 
         // transfer user shares to user
         bool userTransfer = IERC20(_token).transferFrom(msg.sender, _to, userShares);
@@ -47,13 +55,22 @@ contract Gateway is IGateway {
         require(treasuryTransfer, "Failed to transfer tokens to treasury");
 
         delete gatewayOf[_to];
+
+        return stakingPositionId;
     }
 
     /**
      * @dev Split ETH into user and treasury shares
      * @param _to The address to send user shares to
+     * @param _propertyAddress The address of the property to split
+     * @param _payload The payload to send to the property
+     * @return stakingPositionId The ID of the created new staking position
      */
-    function split(address _to) external payable {
+    function send(address _to, address _propertyAddress, bytes32 _payload)
+        external
+        payable
+        returns (uint256 stakingPositionId)
+    {
         require(msg.value > 0, "Must send ETH");
 
         uint256 treasuryShares = _getTreasuryShares(msg.value);
@@ -61,6 +78,9 @@ contract Gateway is IGateway {
         uint256 userShares = msg.value - treasuryShares;
 
         gatewayOf[_to] = Amounts(address(0), msg.value, userShares);
+
+        // deposit to property
+        stakingPositionId = ILockup(_getLockupAddress()).depositToProperty(_propertyAddress, 0, _payload);
 
         // transfer user shares to user
         (bool sentToUser,) = _to.call{value: userShares}("");
@@ -71,6 +91,8 @@ contract Gateway is IGateway {
         require(sentToTreasury, "Failed to send Ether to treasury");
 
         delete gatewayOf[_to];
+
+        return stakingPositionId;
     }
 
     /**
@@ -88,5 +110,13 @@ contract Gateway is IGateway {
      */
     function _getTreasuryAddress() internal view returns (address) {
         return IAddressRegistry(_registry).registries("Treasury");
+    }
+
+    /**
+     * @dev Get the lockup address
+     * @return The lockup address
+     */
+    function _getLockupAddress() internal view returns (address) {
+        return IAddressRegistry(_registry).registries("Lockup");
     }
 }
