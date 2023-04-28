@@ -30,7 +30,7 @@ contract Gateway is IGateway {
      * @param _token The address of the token to split
      * @return stakingPositionId The ID of the created new staking position
      */
-    function split(address _to, address _propertyAddress, bytes32 _payload, uint256 _amount, address _token)
+    function send(address _to, address _propertyAddress, bytes32 _payload, uint256 _amount, address _token)
         external
         returns (uint256 stakingPositionId)
     {
@@ -66,7 +66,7 @@ contract Gateway is IGateway {
      * @param _payload The payload to send to the property
      * @return stakingPositionId The ID of the created new staking position
      */
-    function split(address _to, address _propertyAddress, bytes32 _payload)
+    function send(address _to, address _propertyAddress, bytes32 _payload)
         external
         payable
         returns (uint256 stakingPositionId)

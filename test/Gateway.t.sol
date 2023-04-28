@@ -37,12 +37,12 @@ contract GatewayTest is Test {
     /**
      * @dev Tests sending ETH to the gateway
      */
-    function testEthSplit() public {
+    function testEthSend() public {
         uint256 amount = 100;
         uint256 expectedTreasuryShares = 5;
         uint256 userShares = amount - expectedTreasuryShares;
 
-        gateway.split{value: amount}(ALICE, PROPERTY, PAYLOAD);
+        gateway.send{value: amount}(ALICE, PROPERTY, PAYLOAD);
 
         assertEq(address(TREASURY).balance, expectedTreasuryShares);
         assertEq(address(0x2).balance, userShares);
@@ -57,7 +57,7 @@ contract GatewayTest is Test {
         /**
          * Testing sending ETH
          */
-        assertEq(gateway.split{value: amount}(ALICE, PROPERTY, PAYLOAD), 1);
+        assertEq(gateway.send{value: amount}(ALICE, PROPERTY, PAYLOAD), 1);
 
         /**
          * Testing sending ERC20
@@ -66,13 +66,13 @@ contract GatewayTest is Test {
         TokenMock token = new TokenMock();
         token.mint(address(this), amount);
         token.approve(address(gateway), amount);
-        assertEq(gateway.split(ALICE, PROPERTY, PAYLOAD, amount, address(token)), 1);
+        assertEq(gateway.send(ALICE, PROPERTY, PAYLOAD, amount, address(token)), 1);
     }
 
     /**
      * @dev Tests sending ERC20 tokens to the gateway
      */
-    function testTokenSplit() public {
+    function testTokenSend() public {
         uint256 amount = 100;
         uint256 expectedTreasuryShares = 5;
         uint256 userShares = amount - expectedTreasuryShares;
@@ -81,7 +81,7 @@ contract GatewayTest is Test {
         token.mint(address(this), amount);
         token.approve(address(gateway), amount);
 
-        gateway.split(ALICE, PROPERTY, PAYLOAD, amount, address(token));
+        gateway.send(ALICE, PROPERTY, PAYLOAD, amount, address(token));
 
         assertEq(token.balanceOf(address(TREASURY)), expectedTreasuryShares);
         assertEq(token.balanceOf(address(ALICE)), userShares);
@@ -98,7 +98,7 @@ contract GatewayTest is Test {
         token.approve(address(gateway), amount);
 
         vm.expectRevert("Must send tokens");
-        gateway.split(ALICE, PROPERTY, PAYLOAD, 0, address(token));
+        gateway.send(ALICE, PROPERTY, PAYLOAD, 0, address(token));
     }
 
     /**
@@ -106,6 +106,6 @@ contract GatewayTest is Test {
      */
     function testRevertWhenEthSendZero() public {
         vm.expectRevert("Must send ETH");
-        gateway.split{value: 0}(ALICE, PROPERTY, PAYLOAD);
+        gateway.send{value: 0}(ALICE, PROPERTY, PAYLOAD);
     }
 }
